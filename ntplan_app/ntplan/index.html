@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NT Life Plan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- ── TOP HEADER ── -->
+  <header class="top-header">
+    <div class="header-left">
+      <div class="app-logo">⚡</div>
+      <div>
+        <div class="app-name">NT Life Plan</div>
+        <div class="app-date" id="headerDate">Loading…</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-clock" id="liveClock">00:00</div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <span class="theme-icon" id="themeIcon">🌙</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── PAGE CONTAINER ── -->
+  <main class="page-container">
+
+    <!-- ===== PAGE: TODAY ===== -->
+    <section class="page active" id="page-today">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Today's Plan</h1>
+          <p class="page-sub" id="todaySubtitle">Checking schedule…</p>
+        </div>
+
+        <!-- Current Task Banner -->
+        <div class="current-banner" id="currentBanner">
+          <div class="cb-pulse"></div>
+          <div>
+            <div class="cb-label">Now</div>
+            <div class="cb-task" id="cbTask">Loading…</div>
+            <div class="cb-next" id="cbNext"></div>
+          </div>
+        </div>
+
+        <!-- Day Stats -->
+        <div class="stats-row" id="todayStats"></div>
+
+        <!-- Today Checklist -->
+        <div class="section-heading">
+          <span>Schedule Checklist</span>
+          <button class="btn-sm btn-ghost" onclick="App.resetToday()">Reset</button>
+        </div>
+        <div class="checklist-list" id="todayChecklist"></div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: CALENDAR ===== -->
+    <section class="page" id="page-calendar">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Calendar To-Do</h1>
+          <p class="page-sub">Tap a date · Add & check tasks</p>
+        </div>
+
+        <!-- Calendar -->
+        <div class="cal-card">
+          <div class="cal-nav">
+            <button class="cal-nav-btn" onclick="Cal.prev()">‹</button>
+            <span class="cal-month-label" id="calMonthLabel">March 2026</span>
+            <button class="cal-nav-btn" onclick="Cal.next()">›</button>
+          </div>
+          <div class="cal-dow-row">
+            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+            <span>Th</span><span>Fr</span><span>Sa</span>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+
+        <!-- Selected Day Tasks -->
+        <div class="section-heading">
+          <span id="calSelectedLabel">Select a date</span>
+          <button class="btn-sm btn-primary" onclick="Cal.openAdd()">+ Task</button>
+        </div>
+        <div class="checklist-list" id="calTaskList">
+          <div class="empty-state">Select a date above to view tasks</div>
+        </div>
+
+        <!-- Add Task Modal -->
+        <div class="modal-overlay" id="calAddModal">
+          <div class="modal-card">
+            <div class="modal-title">Add Task</div>
+            <input class="modal-input" id="calTaskInput" placeholder="Task description…" />
+            <select class="modal-input" id="calTaskCat">
+              <option value="study">📚 Study</option>
+              <option value="fitness">🏃 Fitness</option>
+              <option value="health">🌿 Health</option>
+              <option value="college">🏫 College</option>
+              <option value="other">📌 Other</option>
+            </select>
+            <div class="modal-actions">
+              <button class="btn-sm btn-ghost" onclick="Cal.closeAdd()">Cancel</button>
+              <button class="btn-sm btn-primary" onclick="Cal.saveTask()">Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: HABITS ===== -->
+    <section class="page" id="page-habits">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Habit Tracker</h1>
+          <p class="page-sub">7-day streaks · Tap to toggle</p>
+        </div>
+        <div class="stats-row" id="habitStats"></div>
+        <div class="section-heading">
+          <span>This Week</span>
+          <button class="btn-sm btn-ghost" onclick="Habits.reset()">Reset</button>
+        </div>
+        <div id="habitGrid"></div>
+
+        <div class="section-heading" style="margin-top:24px">
+          <span>Daily MIT Tasks</span>
+          <span class="badge badge-accent" id="mitBadge">0/3</span>
+        </div>
+        <div id="mitList"></div>
+        <div class="add-row">
+          <input class="add-input" id="mitInput" placeholder="Most important task for today…" />
+          <button class="btn-sm btn-primary" onclick="Habits.addMIT()">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: FITNESS ===== -->
+    <section class="page" id="page-fitness">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Fitness Plan</h1>
+          <p class="page-sub">12-week walk-run · Easy conversational pace</p>
+        </div>
+
+        <div class="stats-row" id="fitnessStats"></div>
+
+        <div class="info-box warning">
+          ⚠️ <strong>Injury Prevention:</strong> Warm up 5 min · Cool down 10 min · Max 10% weekly mileage increase · Rest 2 days/week · Stop if sharp pain
+        </div>
+
+        <div class="section-heading"><span>Phase 1 — Weeks 1–6 (Morning Only)</span></div>
+        <div id="phase1List"></div>
+
+        <div class="section-heading" style="margin-top:24px"><span>Phase 2 — Weeks 7–12 (Morning + Evening)</span></div>
+        <div id="phase2List"></div>
+
+        <!-- Health Routine -->
+        <div class="section-heading" style="margin-top:24px">
+          <span>Daily Health Checklist</span>
+          <button class="btn-sm btn-ghost" onclick="Fitness.resetHealth()">Reset</button>
+        </div>
+        <div id="healthChecklist"></div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: EXAMS ===== -->
+    <section class="page" id="page-exams">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Exam Prep</h1>
+          <p class="page-sub">RRB NTPC · SSC CGL/CHSL · KVS PGT CS</p>
+        </div>
+
+        <div class="stats-row" id="examStats"></div>
+
+        <div class="section-heading"><span>Subject Priority</span></div>
+        <div id="subjectCards"></div>
+
+        <div class="section-heading" style="margin-top:24px"><span>6-Month Roadmap</span></div>
+        <div id="roadmapList"></div>
+
+        <div class="section-heading" style="margin-top:24px"><span>Weekly Study Schedule</span></div>
+        <div class="week-table-wrap" id="weekTable"></div>
+
+        <div class="section-heading" style="margin-top:24px"><span>Resources</span></div>
+        <div id="resourceList"></div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: AI ANALYSIS ===== -->
+    <section class="page" id="page-ai">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">AI Analysis</h1>
+          <p class="page-sub">Claude analyses your daily routine</p>
+        </div>
+
+        <div class="ai-intro-card">
+          <div class="ai-intro-icon">🤖</div>
+          <div>
+            <div class="ai-intro-title">Ask Claude about your routine</div>
+            <div class="ai-intro-sub">Get personalised insights, optimisation tips, and answers about your M.Tech + Govt Exam plan</div>
+          </div>
+        </div>
+
+        <div class="ai-quick-btns" id="aiQuickBtns"></div>
+
+        <div class="ai-chat" id="aiChat">
+          <div class="ai-msg ai-msg-bot">
+            <div class="ai-avatar">🤖</div>
+            <div class="ai-bubble">Hello! I have your complete NT Life Plan loaded. Ask me anything about optimising your schedule, fitness, exam strategy, or health routine. I'm here to help you succeed! 💪</div>
+          </div>
+        </div>
+
+        <div class="ai-input-row">
+          <input class="ai-input" id="aiInput" placeholder="Ask about your routine…" />
+          <button class="btn-primary btn-send" id="aiSendBtn" onclick="AI.send()">
+            <span id="aiSendIcon">➤</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PAGE: REMINDERS ===== -->
+    <section class="page" id="page-reminders">
+      <div class="page-inner">
+        <div class="page-head">
+          <h1 class="page-title">Reminders</h1>
+          <p class="page-sub">Add dynamic alerts for your day</p>
+        </div>
+
+        <div class="section-heading">
+          <span>Active Reminders</span>
+          <button class="btn-sm btn-primary" onclick="Reminders.openAdd()">+ New</button>
+        </div>
+        <div id="reminderList"></div>
+
+        <!-- Add Reminder Modal -->
+        <div class="modal-overlay" id="reminderModal">
+          <div class="modal-card">
+            <div class="modal-title" id="reminderModalTitle">New Reminder</div>
+            <input class="modal-input" id="remTitle" placeholder="Reminder title…" />
+            <textarea class="modal-input" id="remNote" placeholder="Optional note…" rows="2" style="resize:none"></textarea>
+            <input class="modal-input" type="time" id="remTime" />
+            <select class="modal-input" id="remRepeat">
+              <option value="once">Once</option>
+              <option value="daily">Daily</option>
+              <option value="weekdays">Weekdays only</option>
+              <option value="weekends">Weekends only</option>
+            </select>
+            <select class="modal-input" id="remCategory">
+              <option value="study">📚 Study</option>
+              <option value="fitness">🏃 Fitness</option>
+              <option value="health">🌿 Health</option>
+              <option value="exam">📝 Exam</option>
+              <option value="other">📌 Other</option>
+            </select>
+            <div class="modal-actions">
+              <button class="btn-sm btn-ghost" onclick="Reminders.closeAdd()">Cancel</button>
+              <button class="btn-sm btn-primary" onclick="Reminders.save()">Save</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upcoming Reminders today -->
+        <div class="section-heading" style="margin-top:24px"><span>Upcoming Today</span></div>
+        <div id="upcomingReminders"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── BOTTOM NAV ── -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" onclick="App.goTo('today', this)">
+      <span class="nav-icon">☀️</span>
+      <span class="nav-label">Today</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('calendar', this)">
+      <span class="nav-icon">📅</span>
+      <span class="nav-label">Calendar</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('habits', this)">
+      <span class="nav-icon">✅</span>
+      <span class="nav-label">Habits</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('fitness', this)">
+      <span class="nav-icon">🏃</span>
+      <span class="nav-label">Fitness</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('exams', this)">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Exams</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('ai', this)">
+      <span class="nav-icon">🤖</span>
+      <span class="nav-label">AI</span>
+    </button>
+    <button class="nav-btn" onclick="App.goTo('reminders', this)">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Remind</span>
+    </button>
+  </nav>
+
+  <!-- ── REMINDER TOAST ── -->
+  <div class="reminder-toast" id="reminderToast"></div>
+
+  <!-- SCRIPTS -->
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/fitness.js"></script>
+  <script src="js/exams.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/reminders.js"></script>
+  <script>
+    // Boot
+    App.init();
+  </script>
+</body>
+</html>
