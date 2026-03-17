@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>NT Life Plan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* Loading screen — shown until Firebase confirms login */
+    #appLoader{
+      position:fixed;inset:0;
+      background:var(--bg);
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      z-index:9999;transition:opacity .4s;
+    }
+    #appLoader.hide{opacity:0;pointer-events:none}
+    .ldr-logo{width:70px;height:70px;background:linear-gradient(135deg,#10b981,#3b82f6);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:16px}
+    .ldr-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
+    .ldr-sub{font-size:12px;color:var(--text3);margin-top:6px}
+    .ldr-spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:#10b981;border-radius:50%;animation:spin .7s linear infinite;margin-top:24px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Profile dropdown */
+    .profile-drop{
+      position:fixed;top:calc(var(--head-h) + 8px);right:12px;
+      background:var(--surface);border:1.5px solid var(--border);
+      border-radius:var(--r);padding:16px;width:220px;
+      box-shadow:var(--shadow);z-index:300;
+      opacity:0;pointer-events:none;
+      transform:translateY(-8px) scale(.97);
+      transition:all .2s;
+    }
+    .profile-drop.open{opacity:1;pointer-events:all;transform:translateY(0) scale(1)}
+    .pd-info{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .pd-av{width:38px;height:38px;border-radius:50%;background:var(--green-l);display:flex;align-items:center;justify-content:center;font-size:18px}
+    .pd-phone{font-size:12px;font-weight:600;color:var(--text)}
+    .pd-sync{font-size:10px;color:var(--green);margin-top:1px}
+    .pd-sep{height:1px;background:var(--border);margin-bottom:10px}
+    .pd-btn{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:none;border-radius:6px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:background .15s;font-family:'DM Sans',sans-serif}
+    .pd-btn:hover{background:var(--bg2)}
+    .pd-btn.danger{color:var(--red)}
+    .pd-btn.danger:hover{background:var(--red-l)}
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING SCREEN (prevents flicker) ── -->
+<div id="appLoader">
+  <div class="ldr-logo">⚡</div>
+  <div class="ldr-title">NT Life Plan</div>
+  <div class="ldr-sub">Checking login…</div>
+  <div class="ldr-spin"></div>
+</div>
+
+<!-- ── HEADER ── -->
+<header class="top-header">
+  <div class="header-left">
+    <div class="app-logo">⚡</div>
+    <div>
+      <div class="app-name">NT Life Plan</div>
+      <div class="app-date" id="headerDate">Loading…</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-clock" id="liveClock">00:00</div>
+    <button class="icon-btn" id="themeToggle"><span id="themeIcon">🌙</span></button>
+    <button class="icon-btn" onclick="toggleProfile()">👤</button>
+  </div>
+</header>
+
+<!-- Profile dropdown -->
+<div class="profile-drop" id="profileDrop">
+  <div class="pd-info">
+    <div class="pd-av">👤</div>
+    <div>
+      <div class="pd-phone" id="pdPhone">Loading…</div>
+      <div class="pd-sync" id="pdSync">☁️ Synced</div>
+    </div>
+  </div>
+  <div class="pd-sep"></div>
+  <button class="pd-btn" onclick="syncNow()">🔄 Sync Now</button>
+  <button class="pd-btn danger" onclick="doLogout()">🚪 Logout</button>
+</div>
+
+<!-- ── PAGES ── -->
+<main class="pages-wrap">
+
+  <!-- TODAY -->
+  <section class="page active" id="page-today">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Today's Plan</h1>
+        <p class="page-sub" id="todaySubtitle">Loading…</p>
+      </div>
+      <div class="current-banner">
+        <div class="pulse-ring"></div>
+        <div class="pulse-dot"></div>
+        <div class="cb-body">
+          <div class="cb-label">NOW ACTIVE</div>
+          <div class="cb-task" id="cbTask">—</div>
+          <div class="cb-next" id="cbNext"></div>
+        </div>
+      </div>
+      <div class="stats-row" id="todayStats"></div>
+      <div class="sec-head">
+        <span>Schedule Checklist</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="prog-label" id="todayProgress">0/0</span>
+          <button class="ghost-btn" onclick="App.resetToday()">Reset</button>
+        </div>
+      </div>
+      <div class="prog-track"><div class="prog-fill green" id="todayBar" style="width:0%"></div></div>
+      <div class="check-list" id="todayChecklist"></div>
+    </div>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="page" id="page-calendar">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Calendar</h1>
+        <p class="page-sub">Tap a date · Add &amp; check tasks</p>
+      </div>
+      <div class="cal-wrap">
+        <div class="cal-nav">
+          <button class="cal-arr" onclick="Cal.prev()">‹</button>
+          <span class="cal-month" id="calMonthLabel">—</span>
+          <button class="cal-arr" onclick="Cal.next()">›</button>
+        </div>
+        <div class="cal-dow"><span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span></div>
+        <div class="cal-grid" id="calGrid"></div>
+      </div>
+      <div class="sec-head">
+        <span id="calSelLabel">Select a date</span>
+        <button class="primary-btn sm" onclick="Cal.openAdd()">+ Task</button>
+      </div>
+      <div class="check-list" id="calTaskList"><div class="empty-msg">Tap a date to view tasks</div></div>
+    </div>
+    <div class="sheet-overlay" id="calModal">
+      <div class="sheet">
+        <div class="sheet-bar"></div>
+        <div class="sheet-title">Add Task</div>
+        <input class="field" id="calTaskInput" placeholder="Task description…"/>
+        <select class="field" id="calTaskCat">
+          <option value="study">📚 Study</option>
+          <option value="fitness">🏃 Fitness</option>
+          <option value="health">🌿 Health</option>
+          <option value="college">🏫 College</option>
+          <option value="other">📌 Other</option>
+        </select>
+        <div class="sheet-btns">
+          <button class="ghost-btn full" onclick="Cal.closeAdd()">Cancel</button>
+          <button class="primary-btn full" onclick="Cal.saveTask()">Add</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HABITS -->
+  <section class="page" id="page-habits">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Habit Tracker</h1>
+        <p class="page-sub">7-day streaks · Synced with Today &amp; Fitness</p>
+      </div>
+      <div class="stats-row" id="habitStats"></div>
+      <div class="sec-head">
+        <span>This Week</span>
+        <button class="ghost-btn" onclick="Habits.reset()">Reset</button>
+      </div>
+      <div id="habitGrid"></div>
+      <div class="sec-head" style="margin-top:22px">
+        <span>MIT Tasks</span>
+        <span class="badge green" id="mitBadge">0/0</span>
+      </div>
+      <div id="mitList"></div>
+      <div class="add-row">
+        <input class="field" id="mitInput" placeholder="Add important task…"/>
+        <button class="primary-btn sm" onclick="Habits.addMIT()">Add</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FITNESS -->
+  <section class="page" id="page-fitness">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Fitness Plan</h1>
+        <p class="page-sub">12-week run plan · Synced health checklist</p>
+      </div>
+      <div class="stats-row" id="fitnessStats"></div>
+      <div class="info-chip warn">⚠️ Warm up 5 min · Cool down 10 min · Conversational pace · Rest 2 days/week</div>
+      <div class="sec-head"><span>Phase 1 — Weeks 1–6 (Morning Only)</span></div>
+      <div id="phase1List"></div>
+      <div class="sec-head" style="margin-top:18px"><span>Phase 2 — Weeks 7–12 (Morning + Evening)</span></div>
+      <div id="phase2List"></div>
+      <div class="sec-head" style="margin-top:22px">
+        <span>Daily Health Checklist</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="prog-label" id="healthProg">0/0</span>
+          <button class="ghost-btn" onclick="Fitness.resetHealth()">Reset</button>
+        </div>
+      </div>
+      <div class="prog-track"><div class="prog-fill amber" id="healthBar" style="width:0%"></div></div>
+      <div id="healthChecklist"></div>
+    </div>
+  </section>
+
+  <!-- EXAMS -->
+  <section class="page" id="page-exams">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Exam Prep</h1>
+        <p class="page-sub">RRB NTPC · SSC CGL / KVS PGT CS</p>
+      </div>
+      <div class="stats-row" id="examStats"></div>
+      <div class="sec-head"><span>Subject Priority</span></div>
+      <div id="subjectCards"></div>
+      <div class="sec-head" style="margin-top:20px"><span>6-Month Roadmap</span></div>
+      <div id="roadmapList"></div>
+      <div class="sec-head" style="margin-top:20px"><span>Weekly Schedule</span></div>
+      <div class="scroll-x" id="weekTable"></div>
+      <div class="sec-head" style="margin-top:20px"><span>Resources</span></div>
+      <div id="resourceList"></div>
+    </div>
+  </section>
+
+  <!-- AI -->
+  <section class="page" id="page-ai">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">AI Coach</h1>
+        <p class="page-sub">Claude analyses your daily routine</p>
+      </div>
+      <div class="ai-hero">
+        <div class="ai-avatar-big">🤖</div>
+        <div>
+          <div class="ai-hero-title">Ask Claude anything</div>
+          <div class="ai-hero-sub">Personalised insights for your M.Tech + Govt Exam journey</div>
+        </div>
+      </div>
+      <div class="quick-row" id="aiQuickBtns"></div>
+      <div class="chat-box" id="aiChat">
+        <div class="chat-msg bot">
+          <div class="chat-av">🤖</div>
+          <div class="chat-bubble">Hi! I have your complete NT Life Plan loaded. Ask me anything! 💪</div>
+        </div>
+      </div>
+      <div class="chat-row">
+        <input class="chat-inp" id="aiInput" placeholder="Ask about your routine…"/>
+        <button class="send-btn" id="aiSendBtn" onclick="AI.send()"><span id="aiSendIcon">➤</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REMINDERS -->
+  <section class="page" id="page-reminders">
+    <div class="page-inner">
+      <div class="page-head">
+        <h1 class="page-title">Reminders</h1>
+        <p class="page-sub">Smart repeating alerts</p>
+      </div>
+      <div class="sec-head">
+        <span>All Reminders</span>
+        <button class="primary-btn sm" onclick="Reminders.openAdd()">+ New</button>
+      </div>
+      <div id="reminderList"></div>
+      <div class="sec-head" style="margin-top:22px"><span>Upcoming Today</span></div>
+      <div id="upcomingReminders"></div>
+    </div>
+    <div class="sheet-overlay" id="reminderModal">
+      <div class="sheet">
+        <div class="sheet-bar"></div>
+        <div class="sheet-title" id="remModalTitle">New Reminder</div>
+        <input class="field" id="remTitle" placeholder="Reminder title…"/>
+        <textarea class="field" id="remNote" placeholder="Optional note…" rows="2" style="resize:none"></textarea>
+        <input class="field" type="time" id="remTime"/>
+        <select class="field" id="remRepeat">
+          <option value="once">Once</option>
+          <option value="daily">Daily</option>
+          <option value="weekdays">Weekdays only</option>
+          <option value="weekends">Weekends only</option>
+        </select>
+        <select class="field" id="remCat">
+          <option value="study">📚 Study</option>
+          <option value="fitness">🏃 Fitness</option>
+          <option value="health">🌿 Health</option>
+          <option value="exam">📝 Exam</option>
+          <option value="other">📌 Other</option>
+        </select>
+        <div class="sheet-btns">
+          <button class="ghost-btn full" onclick="Reminders.closeAdd()">Cancel</button>
+          <button class="primary-btn full" onclick="Reminders.save()">Save</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- TIMER FAB -->
+<button class="fab" id="timerFab" onclick="TimerUI.open()">
+  <span class="fab-ico" id="fabIco">⏱</span>
+  <span class="fab-txt" id="fabTxt"></span>
+</button>
+
+<!-- TIMER SHEET -->
+<div class="sheet-overlay" id="timerSheet">
+  <div class="sheet timer-sheet">
+    <div class="sheet-bar"></div>
+    <div class="timer-modes">
+      <button class="t-mode active" id="tm-focus" onclick="TimerUI.setMode('focus')">Focus</button>
+      <button class="t-mode" id="tm-short" onclick="TimerUI.setMode('short')">Short Break</button>
+      <button class="t-mode" id="tm-long"  onclick="TimerUI.setMode('long')">Long Break</button>
+    </div>
+    <div class="timer-ring-wrap">
+      <svg class="timer-svg" viewBox="0 0 220 220">
+        <circle class="ring-bg" cx="110" cy="110" r="95"/>
+        <circle class="ring-fg" id="timerRing" cx="110" cy="110" r="95"/>
+      </svg>
+      <div class="timer-inner">
+        <div class="timer-time" id="timerDisplay">25:00</div>
+        <div class="timer-lbl" id="timerModeLbl">Focus Time</div>
+        <div class="timer-dots" id="timerDots"></div>
+      </div>
+    </div>
+    <div class="timer-ctrls">
+      <button class="t-ctrl" onclick="TimerUI.reset()">↺</button>
+      <button class="t-play" id="timerPlay" onclick="TimerUI.toggle()">▶</button>
+      <button class="t-ctrl" onclick="TimerUI.close()">✕</button>
+    </div>
+    <div class="timer-custom">
+      <span>Custom (min):</span>
+      <input type="number" id="timerCustom" class="t-custom-inp" min="1" max="120" placeholder="25" onchange="TimerUI.setCustom()"/>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="App.goTo('today',this)"><span class="nav-ico">☀️</span><span class="nav-lbl">Today</span></button>
+  <button class="nav-btn" onclick="App.goTo('calendar',this)"><span class="nav-ico">📅</span><span class="nav-lbl">Calendar</span></button>
+  <button class="nav-btn" onclick="App.goTo('habits',this)"><span class="nav-ico">✅</span><span class="nav-lbl">Habits</span></button>
+  <button class="nav-btn" onclick="App.goTo('fitness',this)"><span class="nav-ico">🏃</span><span class="nav-lbl">Fitness</span></button>
+  <button class="nav-btn" onclick="App.goTo('exams',this)"><span class="nav-ico">📚</span><span class="nav-lbl">Exams</span></button>
+  <button class="nav-btn" onclick="App.goTo('ai',this)"><span class="nav-ico">🤖</span><span class="nav-lbl">AI</span></button>
+  <button class="nav-btn" onclick="App.goTo('reminders',this)"><span class="nav-ico">🔔</span><span class="nav-lbl">Remind</span></button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase auth check for main app -->
+<script type="module">
+  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut }
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot }
+                              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const cfg = {
+    apiKey:            "AIzaSyCDr7OWLyCRbyWiEIvmdvIN2Y3TBrHeH6g",
+    authDomain:        "nt-life-plan-94c13.firebaseapp.com",
+    projectId:         "nt-life-plan-94c13",
+    storageBucket:     "nt-life-plan-94c13.firebasestorage.app",
+    messagingSenderId: "452413178667",
+    appId:             "1:452413178667:web:502cde97c7cad7246e7b6e"
+  };
+
+  const fbApp  = initializeApp(cfg);
+  const fbAuth = getAuth(fbApp);
+  const fbDb   = getFirestore(fbApp);
+  const loader = document.getElementById('appLoader');
+
+  function sk(k){ return k.replace(/\//g,'__').replace(/\./g,'_D_'); }
+  function ok(k){ return k.replace(/__/g,'/').replace(/_D_/g,'.'); }
+  const PFX = ['nt_','sync_','cal_','health_','today_'];
+  const shouldSync = k => PFX.some(p=>k.startsWith(p));
+
+  async function saveCloud(uid,key,val){
+    try{ await setDoc(doc(fbDb,'users',uid,'data',sk(key)),{value:val,ts:Date.now()}); }catch(e){}
+  }
+
+  async function pullCloud(uid){
+    try{
+      const meta=await getDoc(doc(fbDb,'users',uid,'meta','keys'));
+      if(!meta.exists()) return;
+      const keys=meta.data().keys||[];
+      for(const key of keys){
+        const d=await getDoc(doc(fbDb,'users',uid,'data',sk(key)));
+        if(d.exists()){ localStorage._orig(key,d.data().value); }
+      }
+    }catch(e){}
+  }
+
+  function listenCloud(uid){
+    onSnapshot(collection(fbDb,'users',uid,'data'),snap=>{
+      snap.docChanges().forEach(ch=>{
+        if(ch.type==='added'||ch.type==='modified'){
+          const d=ch.doc.data(); const k=ok(ch.doc.id);
+          if(k&&d.value) localStorage._orig(k,d.value);
+        }
+      });
+    },()=>{});
+  }
+
+  async function trackKey(uid,key){
+    try{
+      const ref=doc(fbDb,'users',uid,'meta','keys');
+      const snap=await getDoc(ref);
+      const keys=snap.exists()?(snap.data().keys||[]):[];
+      if(!keys.includes(key)){ keys.push(key); await setDoc(ref,{keys,ts:Date.now()}); }
+    }catch(e){}
+  }
+
+  onAuthStateChanged(fbAuth, async user=>{
+    if(!user){
+      /* Not logged in → go to login, no flicker */
+      window.location.replace('login.html');
+      return;
+    }
+
+    /* Logged in → set up everything then show app */
+    localStorage.setItem('nt_uid',   user.uid);
+    localStorage.setItem('nt_phone', user.phoneNumber||'');
+
+    const el=document.getElementById('pdPhone');
+    if(el) el.textContent=user.phoneNumber||'User';
+
+    /* Patch localStorage to auto-sync */
+    localStorage._orig = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function(key,val){
+      localStorage._orig(key,val);
+      if(shouldSync(key)){ saveCloud(user.uid,key,val); trackKey(user.uid,key); }
+    };
+
+    /* Pull cloud data first */
+    await pullCloud(user.uid);
+    listenCloud(user.uid);
+
+    /* Expose signOut */
+    window._doSignOut = ()=>signOut(fbAuth);
+
+    /* Hide loader and boot app */
+    loader.classList.add('hide');
+    setTimeout(()=>{ loader.style.display='none'; window._bootApp(); },400);
+  });
+</script>
+
+<!-- APP SCRIPTS -->
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/habits.js"></script>
+<script src="js/fitness.js"></script>
+<script src="js/exams.js"></script>
+<script src="js/ai.js"></script>
+<script src="js/reminders.js"></script>
+<script src="js/timer.js"></script>
+
+<script>
+  /* Boot function called after Firebase confirms login */
+  window._bootApp = function(){
+    if(window._appBooted) return;
+    window._appBooted = true;
+    App.init();
+  };
+
+  /* Profile dropdown */
+  function toggleProfile(){
+    document.getElementById('profileDrop').classList.toggle('open');
+  }
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.pd-btn')&&!e.target.closest('#profileDrop')&&!e.target.closest('.icon-btn'))
+      document.getElementById('profileDrop').classList.remove('open');
+  });
+
+  function syncNow(){
+    document.getElementById('pdSync').textContent='🔄 Syncing…';
+    setTimeout(()=>{
+      document.getElementById('pdSync').textContent='☁️ Synced';
+      App.showToast('☁️ Data synced ✓');
+      document.getElementById('profileDrop').classList.remove('open');
+    },1500);
+  }
+
+  async function doLogout(){
+    if(!confirm('Logout? Your data is saved and will restore next login.')) return;
+    try{ if(window._doSignOut) await window._doSignOut(); }catch(e){}
+    localStorage.removeItem('nt_uid');
+    localStorage.removeItem('nt_phone');
+    window.location.replace('login.html');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <title>NT Life Plan — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#f0f5fb;--surface:#fff;--border:#e0e8f4;
+      --text:#1a2340;--text2:#4a5570;--text3:#8a93b0;
+      --green:#10b981;--green-d:#065f46;--green-l:#d1fae5;
+      --red:#ef4444;--red-l:#fee2e2;
+    }
+    [data-theme="dark"]{
+      --bg:#0d1117;--surface:#1c2436;--border:#2a3554;
+      --text:#e2e8f8;--text2:#8b93b8;--text3:#4a5278;
+      --green:#34d399;--green-d:#34d399;--green-l:rgba(52,211,153,.13);
+      --red:#f87171;--red-l:rgba(248,113,113,.13);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;transition:background .3s}
+
+    /* Loading splash */
+    .splash{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;transition:opacity .3s}
+    .splash.hide{opacity:0;pointer-events:none}
+    .splash-logo{width:70px;height:70px;background:linear-gradient(135deg,#10b981,#3b82f6);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:16px}
+    .splash-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)}
+    .splash-spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;margin-top:24px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Login card */
+    .card{background:var(--surface);border:1.5px solid var(--border);border-radius:24px;padding:36px 28px 32px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(26,35,64,.10)}
+    .logo{width:60px;height:60px;background:linear-gradient(135deg,#10b981,#3b82f6);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 18px}
+    .title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;text-align:center;color:var(--text);margin-bottom:6px}
+    .sub{font-size:13px;color:var(--text3);text-align:center;margin-bottom:24px;line-height:1.5}
+    .chips{display:flex;gap:8px;margin-bottom:24px}
+    .chip{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;font-size:11px;color:var(--text2);font-weight:500}
+    .chip span{display:block;font-size:18px;margin-bottom:3px}
+    .lbl{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+    .phone-row{display:flex;gap:8px;margin-bottom:12px}
+    .cc{width:90px;flex-shrink:0;padding:12px 10px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:14px;font-weight:600;color:var(--text);font-family:'DM Sans',sans-serif}
+    .inp{flex:1;padding:12px 14px;border-radius:10px;border:1.5px solid var(--border);background:var(--bg);font-size:16px;color:var(--text);font-family:'DM Sans',sans-serif;transition:border-color .2s;outline:none}
+    .inp:focus{border-color:var(--green)}
+    .btn{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(16,185,129,.35)}
+    .btn:disabled{background:#94a3b8;cursor:not-allowed;transform:none;box-shadow:none}
+    .err{background:var(--red-l);border:1px solid var(--red);color:var(--red);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:none;line-height:1.5}
+    .err.show{display:block}
+    .ok{background:var(--green-l);border:1px solid var(--green);color:var(--green-d);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:12px;display:none;line-height:1.5}
+    .ok.show{display:block}
+    .step{display:none}
+    .step.on{display:block}
+    .otp-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+    .otp{width:46px;height:54px;border-radius:12px;border:2px solid var(--border);background:var(--bg);font-size:22px;font-weight:700;text-align:center;color:var(--text);font-family:'Syne',sans-serif;outline:none;transition:border-color .2s}
+    .otp:focus{border-color:var(--green)}
+    .phone-show{font-weight:700;text-align:center;margin-bottom:16px;font-size:15px;color:var(--text)}
+    .back{text-align:center;font-size:13px;color:var(--text3);cursor:pointer;padding:8px;transition:color .2s}
+    .back:hover{color:var(--green)}
+    .resend-row{text-align:center;font-size:13px;color:var(--text3);margin-top:8px}
+    .resend-btn{background:none;border:none;color:var(--green);font-weight:600;cursor:pointer;font-size:13px;font-family:'DM Sans',sans-serif}
+    .resend-btn:disabled{color:var(--text3);cursor:not-allowed}
+    .footer{text-align:center;font-size:11px;color:var(--text3);margin-top:16px;line-height:1.6}
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+    .theme-btn{position:fixed;top:16px;right:16px;width:36px;height:36px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    #recaptcha-container{margin-bottom:10px}
+  </style>
+</head>
+<body>
+
+<!-- Theme toggle -->
+<button class="theme-btn" onclick="toggleTheme()"><span id="themeIco">🌙</span></button>
+
+<!-- Loading splash (shown while Firebase checks if already logged in) -->
+<div class="splash" id="splash">
+  <div class="splash-logo">⚡</div>
+  <div class="splash-title">NT Life Plan</div>
+  <div class="splash-spin"></div>
+</div>
+
+<!-- Login card (hidden until splash hides) -->
+<div class="card" id="loginCard" style="display:none">
+  <div class="logo">⚡</div>
+  <div class="title">NT Life Plan</div>
+  <div class="sub">Your M.Tech + Govt Exam planner<br/>Sign in to sync data across all devices</div>
+
+  <div class="chips">
+    <div class="chip"><span>🔄</span>Auto Sync</div>
+    <div class="chip"><span>📱</span>Any Device</div>
+    <div class="chip"><span>☁️</span>Cloud Backup</div>
+  </div>
+
+  <!-- STEP 1: Phone number -->
+  <div class="step on" id="s1">
+    <div class="lbl">Phone Number</div>
+    <div class="phone-row">
+      <select class="cc" id="cc">
+        <option value="+91">🇮🇳 +91</option>
+        <option value="+1">🇺🇸 +1</option>
+        <option value="+44">🇬🇧 +44</option>
+        <option value="+61">🇦🇺 +61</option>
+        <option value="+971">🇦🇪 +971</option>
+      </select>
+      <input class="inp" id="phoneInp" type="tel" placeholder="10-digit number"
+        maxlength="10" inputmode="numeric"
+        oninput="this.value=this.value.replace(/\D/g,'')"
+        onkeydown="if(event.key==='Enter')sendOTP()"/>
+    </div>
+    <div id="recaptcha-container"></div>
+    <div class="err" id="e1"></div>
+    <button class="btn" id="sendBtn" onclick="sendOTP()">
+      <span id="sendTxt">Send OTP</span>
+    </button>
+    <div class="footer">🔒 Your number is only used to identify your account.<br/>No spam. Free forever.</div>
+  </div>
+
+  <!-- STEP 2: OTP -->
+  <div class="step" id="s2">
+    <div class="phone-show" id="phoneShow">+91 XXXXXXXXXX</div>
+    <div class="lbl" style="text-align:center;margin-bottom:12px">Enter 6-digit OTP</div>
+    <div class="otp-row">
+      <input class="otp" id="o0" maxlength="1" inputmode="numeric" oninput="otpIn(0,this)" onkeydown="otpKey(0,event)"/>
+      <input class="otp" id="o1" maxlength="1" inputmode="numeric" oninput="otpIn(1,this)" onkeydown="otpKey(1,event)"/>
+      <input class="otp" id="o2" maxlength="1" inputmode="numeric" oninput="otpIn(2,this)" onkeydown="otpKey(2,event)"/>
+      <input class="otp" id="o3" maxlength="1" inputmode="numeric" oninput="otpIn(3,this)" onkeydown="otpKey(3,event)"/>
+      <input class="otp" id="o4" maxlength="1" inputmode="numeric" oninput="otpIn(4,this)" onkeydown="otpKey(4,event)"/>
+      <input class="otp" id="o5" maxlength="1" inputmode="numeric" oninput="otpIn(5,this)" onkeydown="otpKey(5,event)"/>
+    </div>
+    <div class="err" id="e2"></div>
+    <div class="ok"  id="ok2"></div>
+    <button class="btn" id="verifyBtn" onclick="verifyOTP()">
+      <span id="verifyTxt">Verify &amp; Login</span>
+    </button>
+    <div class="resend-row">
+      Didn't get OTP? <button class="resend-btn" id="resendBtn" onclick="resend()" disabled>Resend in <span id="rc">30</span>s</button>
+    </div>
+    <div class="back" onclick="backToPhone()">← Change number</div>
+  </div>
+
+</div><!-- /card -->
+
+<!-- Firebase v10 module (ESM) -->
+<script type="module">
+  import { initializeApp }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  /* ── YOUR FIREBASE CONFIG ── */
+  const cfg = {
+    apiKey:            "AIzaSyCDr7OWLyCRbyWiEIvmdvIN2Y3TBrHeH6g",
+    authDomain:        "nt-life-plan-94c13.firebaseapp.com",
+    projectId:         "nt-life-plan-94c13",
+    storageBucket:     "nt-life-plan-94c13.firebasestorage.app",
+    messagingSenderId: "452413178667",
+    appId:             "1:452413178667:web:502cde97c7cad7246e7b6e"
+  };
+
+  const app  = initializeApp(cfg);
+  const auth = getAuth(app);
+
+  /* Expose to global scope */
+  window._auth      = auth;
+  window._RV        = RecaptchaVerifier;
+  window._signPhone = signInWithPhoneNumber;
+
+  /* Auth state check — only runs ONCE on page load */
+  onAuthStateChanged(auth, user => {
+    const splash = document.getElementById('splash');
+    const card   = document.getElementById('loginCard');
+
+    if (user) {
+      /* Already logged in → go straight to app, no flicker */
+      localStorage.setItem('nt_uid',   user.uid);
+      localStorage.setItem('nt_phone', user.phoneNumber || '');
+      window.location.replace('index.html');
+    } else {
+      /* Not logged in → show login form */
+      splash.classList.add('hide');
+      setTimeout(() => {
+        splash.style.display = 'none';
+        card.style.display   = 'block';
+      }, 300);
+    }
+  });
+</script>
+
+<script>
+/* ── THEME ── */
+(function(){
+  const t=localStorage.getItem('nt_theme')||'light';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themeIco').textContent=t==='dark'?'☀️':'🌙';
+})();
+function toggleTheme(){
+  const c=document.documentElement.getAttribute('data-theme');
+  const n=c==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',n);
+  document.getElementById('themeIco').textContent=n==='dark'?'☀️':'🌙';
+  localStorage.setItem('nt_theme',n);
+}
+
+/* ── STATE ── */
+let confirm = null, resendT = null;
+
+/* ── HELPERS ── */
+function showErr(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.classList.add('show'); }
+function hideErr(id){ document.getElementById(id).classList.remove('show'); }
+function showOk(id,msg){ const e=document.getElementById(id); e.textContent=msg; e.classList.add('show'); }
+function setBusy(btnId,txtId,busy,label){
+  const b=document.getElementById(btnId);
+  b.disabled=busy;
+  document.getElementById(txtId).innerHTML=busy?'<div class="spinner"></div>':label;
+}
+
+/* ── SEND OTP ── */
+function sendOTP(){
+  hideErr('e1');
+  const code  = document.getElementById('cc').value;
+  const phone = document.getElementById('phoneInp').value.trim();
+  if(phone.length<10){ showErr('e1','Enter a valid 10-digit phone number'); return; }
+  const full = code+phone;
+  setBusy('sendBtn','sendTxt',true,'Send OTP');
+
+  try{
+    if(!window._auth){ showErr('e1','Firebase not loaded yet. Please wait.'); setBusy('sendBtn','sendTxt',false,'Send OTP'); return; }
+
+    if(!window._rcVerifier){
+      window._rcVerifier = new window._RV(window._auth,'recaptcha-container',{
+        size:'invisible', callback:()=>{}
+      });
+    }
+
+    window._signPhone(window._auth, full, window._rcVerifier)
+      .then(result=>{
+        confirm=result;
+        document.getElementById('phoneShow').textContent=full;
+        document.getElementById('s1').classList.remove('on');
+        document.getElementById('s2').classList.add('on');
+        document.getElementById('o0').focus();
+        startTimer();
+        setBusy('sendBtn','sendTxt',false,'Send OTP');
+      })
+      .catch(err=>{
+        setBusy('sendBtn','sendTxt',false,'Send OTP');
+        showErr('e1',friendlyErr(err.code));
+        if(window._rcVerifier){ window._rcVerifier.clear(); window._rcVerifier=null; }
+      });
+  }catch(e){
+    setBusy('sendBtn','sendTxt',false,'Send OTP');
+    showErr('e1','Something went wrong. Try again.');
+    console.error(e);
+  }
+}
+
+/* ── OTP INPUT ── */
+function otpIn(i,el){
+  el.value=el.value.replace(/\D/g,'');
+  if(el.value && i<5) document.getElementById('o'+(i+1)).focus();
+  const otp=Array.from({length:6},(_,j)=>document.getElementById('o'+j).value).join('');
+  if(otp.length===6) verifyOTP();
+}
+function otpKey(i,e){
+  if(e.key==='Backspace'&&!document.getElementById('o'+i).value&&i>0)
+    document.getElementById('o'+(i-1)).focus();
+}
+
+/* ── VERIFY OTP ── */
+function verifyOTP(){
+  hideErr('e2');
+  const otp=Array.from({length:6},(_,i)=>document.getElementById('o'+i).value).join('');
+  if(otp.length<6){ showErr('e2','Enter all 6 digits'); return; }
+  if(!confirm){ showErr('e2','Please request OTP first'); return; }
+  setBusy('verifyBtn','verifyTxt',true,'Verify &amp; Login');
+
+  confirm.confirm(otp)
+    .then(result=>{
+      const user=result.user;
+      localStorage.setItem('nt_uid',   user.uid);
+      localStorage.setItem('nt_phone', user.phoneNumber||'');
+      showOk('ok2','✅ Login successful! Loading your app…');
+      setTimeout(()=>window.location.replace('index.html'),1000);
+    })
+    .catch(err=>{
+      setBusy('verifyBtn','verifyTxt',false,'Verify &amp; Login');
+      showErr('e2',friendlyErr(err.code));
+    });
+}
+
+/* ── RESEND / BACK ── */
+function resend(){
+  for(let i=0;i<6;i++) document.getElementById('o'+i).value='';
+  backToPhone();
+  setTimeout(sendOTP,300);
+}
+function backToPhone(){
+  document.getElementById('s2').classList.remove('on');
+  document.getElementById('s1').classList.add('on');
+  hideErr('e1'); clearInterval(resendT);
+}
+function startTimer(){
+  let n=30; const btn=document.getElementById('resendBtn'); const sp=document.getElementById('rc');
+  btn.disabled=true; sp.textContent=n;
+  clearInterval(resendT);
+  resendT=setInterval(()=>{ n--; sp.textContent=n; if(n<=0){ clearInterval(resendT); btn.disabled=false; btn.innerHTML='Resend OTP'; }},1000);
+}
+
+/* ── ERROR MESSAGES ── */
+function friendlyErr(code){
+  return {
+    'auth/invalid-phone-number':     'Invalid phone number format.',
+    'auth/too-many-requests':        'Too many attempts. Wait a few minutes.',
+    'auth/invalid-verification-code':'Wrong OTP. Please try again.',
+    'auth/code-expired':             'OTP expired. Request a new one.',
+    'auth/billing-not-enabled':      'Add test numbers in Firebase Console (Authentication → Phone → Test numbers) or upgrade to Blaze plan.',
+    'auth/network-request-failed':   'No internet. Check your connection.',
+    'auth/configuration-not-found':  'Enable Phone Auth in Firebase Console first.',
+  }[code]||'Error: '+code;
+}
+</script>
+</body>
+</html>
